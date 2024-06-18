@@ -10,24 +10,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 'Checkout GitHub Action'
-        uses: actions/checkout@master
+    - name: 'Checkout GitHub Action'
+      uses: actions/checkout@master
       
-      - name: Set up .NET Core
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: '3.1.101'
+    - name: 'Login via Azure CLI'
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Build with dotnet
-        run: dotnet build --configuration Release
+    - name: 'Deploy ARM Template'
+      uses: azure/arm-deploy@v1
+      with:
+        scope: resourcegroup
+        resourceGroupName: 'YourResourceGroupName'
+        template: 'deploy.json'
+        parameters: 'deploy.parameters.json'
 
-      - name: dotnet publish
-        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+    - name: Set up .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '3.1.101'
 
-      - name: 'Deploy to Azure WebApp'
-        uses: azure/webapps-deploy@v2
-        with: 
-          app-name: 'contactDatabaseApplication'
-          slot-name: 'production' 
-          publish-profile: ${{ secrets.AzureAppService_PublishProfile }} 
-          package: ${{env.DOTNET_ROOT}}/myapp
+    - name: Build with dotnet
+      run: dotnet build --configuration Release
+
+    - name: dotnet publish
+      run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+
+    - name: 'Deploy to Azure WebApp'
+      uses: azure/webapps-deploy@v2
+      with: 
+        app-name: 'contactDatabaseApplication'
+        slot-name: 'production' 
+        publish-profile: ${{ secrets.AzureAppService_PublishProfile }} 
+        package: ${{env.DOTNET_ROOT}}/myapp
